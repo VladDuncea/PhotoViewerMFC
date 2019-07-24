@@ -16,6 +16,7 @@
 
 class CPhotoViewerMFCApp : public CWinAppEx
 {
+	ULONG_PTR gdiplusToken;
 public:
 	CPhotoViewerMFCApp() noexcept;
 

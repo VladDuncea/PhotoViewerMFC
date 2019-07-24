@@ -11,7 +11,7 @@
 #endif
 
 #include "PhotoViewerMFCDoc.h"
-
+#include "MainFrm.h"
 #include <propkey.h>
 
 #ifdef _DEBUG
@@ -31,6 +31,7 @@ END_MESSAGE_MAP()
 CPhotoViewerMFCDoc::CPhotoViewerMFCDoc() noexcept
 {
 	// TODO: add one-time construction code here
+	m_nBugPosition = -1;
 
 }
 
@@ -44,6 +45,8 @@ BOOL CPhotoViewerMFCDoc::OnNewDocument()
 		return FALSE;
 
 	// TODO: add reinitialization code here
+	m_BugDataArray.RemoveAll();
+	m_nBugPosition = -1;
 	// (SDI documents will reuse this document)
 
 	return TRUE;
@@ -62,7 +65,24 @@ void CPhotoViewerMFCDoc::Serialize(CArchive& ar)
 	}
 	else
 	{
-		// TODO: add loading code here
+		CMainFrame* pMain = (CMainFrame*)AfxGetMainWnd();
+		SBugData Data;
+		CString strOneLine;
+		// read data in, one line at a time 
+		while (ar.ReadString(strOneLine))
+		{
+			char strPass[250];
+			strcpy_s(strPass, CStringA(strOneLine).GetString());
+			// convert the text to floats 
+			sscanf_s(strPass, "%g %g\n", &Data.x, &Data.y);
+			
+			// add the data to the array 
+			m_BugDataArray.Add(Data);
+		}	
+		//Update status bar
+		CString strStatus;
+		strStatus.Format("Loaded %d points.", m_BugDataArray.GetSize());
+		pMain->ChangeStatusText(strStatus);
 	}
 }
 

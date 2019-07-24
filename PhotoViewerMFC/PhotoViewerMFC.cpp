@@ -12,6 +12,11 @@
 #include "PhotoViewerMFCDoc.h"
 #include "PhotoViewerMFCView.h"
 
+#include <objidl.h>
+#include <gdiplus.h>
+#pragma comment (lib,"Gdiplus.lib")
+
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -143,6 +148,13 @@ BOOL CPhotoViewerMFCApp::InitInstance()
 	//  In an SDI app, this should occur after ProcessShellCommand
 	// Enable drag/drop open
 	m_pMainWnd->DragAcceptFiles();
+
+	///Added by me
+
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	// Initialize GDI+.
+	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
 	return TRUE;
 }
 
@@ -150,6 +162,9 @@ int CPhotoViewerMFCApp::ExitInstance()
 {
 	//TODO: handle additional resources you may have added
 	AfxOleTerm(FALSE);
+	///Added by me
+	//Delete GDI
+	Gdiplus::GdiplusShutdown(gdiplusToken);
 
 	return CWinAppEx::ExitInstance();
 }

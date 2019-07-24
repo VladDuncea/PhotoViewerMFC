@@ -4,6 +4,7 @@
 
 #include "pch.h"
 #include "framework.h"
+#include "resource.h"
 // SHARED_HANDLERS can be defined in an ATL project implementing preview, thumbnail
 // and search filter handlers and allows sharing of document code with that project.
 #ifndef SHARED_HANDLERS
@@ -29,6 +30,8 @@ BEGIN_MESSAGE_MAP(CPhotoViewerMFCView, CFormView)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CPhotoViewerMFCView::OnFilePrintPreview)
 	ON_WM_CONTEXTMENU()
 	ON_WM_RBUTTONUP()
+	ON_COMMAND(IDM_VIEW_ANIMATION, &CPhotoViewerMFCView::OnViewAnimation)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 // CPhotoViewerMFCView construction/destruction
@@ -62,9 +65,7 @@ void CPhotoViewerMFCView::OnInitialUpdate()
 	CFormView::OnInitialUpdate();
 	GetParentFrame()->RecalcLayout();
 	ResizeParentToFit();
-
 }
-
 
 // CPhotoViewerMFCView printing
 
@@ -133,3 +134,95 @@ CPhotoViewerMFCDoc* CPhotoViewerMFCView::GetDocument() const // non-debug versio
 
 
 // CPhotoViewerMFCView message handlers
+
+
+void CPhotoViewerMFCView::OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/)
+{
+	// TODO: Add your specialized code here and/or call the base class
+	
+
+	///Added by me
+	//CListBox* pList = reinterpret_cast<CListBox*>(GetDlgItem(IDC_LIST1));
+
+	// get a pointer to the document class 
+	CDC* pDC = GetDC();
+	CPhotoViewerMFCDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	// make pens for solid lines of thickness 2 
+	CPen RedPen(PS_SOLID, 2, RGB(255, 0, 0));
+	CPen BluePen(PS_SOLID, 2, RGB(0, 0, 255));
+
+	//Change pen to red
+	CPen* pOldPen = pDC->SelectObject(&RedPen);
+
+	// get the total number of data points 
+	int N = pDoc->m_BugDataArray.GetSize();
+
+	// draw all of the connecting lines 
+	for (int i = 0; i < pDoc->m_nBugPosition - 1; i++)
+	{
+		pDC->MoveTo(pDoc->m_BugDataArray[i].x, pDoc->m_BugDataArray[i].y);
+		pDC->LineTo(pDoc->m_BugDataArray[i + 1].x, pDoc->m_BugDataArray[i + 1].y);
+	}
+
+	//Change pen
+	pDC->SelectObject(&BluePen);
+
+	// start drawing non animated tracks, but need to check for a 
+	// valid starting postion 
+	int start = pDoc->m_nBugPosition;
+	if (start < 0) 
+		start = 0;
+	for (int i = start; i < N - 2; i++)
+	{
+		pDC->MoveTo(pDoc->m_BugDataArray[i].x, pDoc->m_BugDataArray[i].y);
+		pDC->LineTo(pDoc->m_BugDataArray[i + 1].x, pDoc->m_BugDataArray[i + 1].y);
+	}
+
+	// deselect pens and delete them 
+	pDC->SelectObject(pOldPen);
+	RedPen.DeleteObject();
+	BluePen.DeleteObject();
+
+	// move to next position or quit animating 
+	if (pDoc->m_nBugPosition != -1) pDoc->m_nBugPosition++;
+	if (pDoc->m_nBugPosition >= N)
+	{
+		pDoc->m_nBugPosition = -1;
+
+		// stop timer 1 
+		KillTimer(1);
+
+		// redraw and erase so all lines are in initial state (blue) 
+		OnUpdate(NULL, NULL,NULL);
+	}
+}
+
+
+void CPhotoViewerMFCView::OnViewAnimation()
+{
+	// TODO: Add your command handler code here
+	// get the document 
+	CPhotoViewerMFCDoc* pDoc = GetDocument();
+
+	// set the position to the first data point 
+	pDoc->m_nBugPosition = 0;
+
+	// create a timer with id=1 and delay of 200 milliseconds 
+	SetTimer(1, 200, NULL);
+}
+
+
+void CPhotoViewerMFCView::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (nIDEvent == 1)
+	{
+		// tell windows the view needs redrawn 
+		// note: the last parameter is the erase flag. 
+		// if it is TRUE, things will flicker like crazy. 
+		OnUpdate(NULL,NULL,NULL);
+	}
+	CFormView::OnTimer(nIDEvent);
+}

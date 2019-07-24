@@ -222,3 +222,8 @@ BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParent
 	return TRUE;
 }
 
+void CMainFrame::ChangeStatusText(LPCTSTR text)
+{
+	m_wndStatusBar.SetWindowText(text);
+}
+

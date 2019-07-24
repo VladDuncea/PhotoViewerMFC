@@ -16,6 +16,7 @@ public:
 
 // Operations
 public:
+	void ChangeStatusText(LPCTSTR text);
 
 // Overrides
 public:

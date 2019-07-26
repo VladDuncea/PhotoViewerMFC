@@ -30,8 +30,9 @@ BEGIN_MESSAGE_MAP(CPhotoViewerMFCView, CFormView)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CPhotoViewerMFCView::OnFilePrintPreview)
 	ON_WM_CONTEXTMENU()
 	ON_WM_RBUTTONUP()
-	ON_COMMAND(IDM_VIEW_ANIMATION, &CPhotoViewerMFCView::OnViewAnimation)
-	ON_WM_TIMER()
+	ON_WM_SIZE()
+	ON_WM_PAINT()
+	ON_WM_SIZING()
 END_MESSAGE_MAP()
 
 // CPhotoViewerMFCView construction/destruction
@@ -40,7 +41,6 @@ CPhotoViewerMFCView::CPhotoViewerMFCView() noexcept
 	: CFormView(IDD_PHOTOVIEWERMFC_FORM)
 {
 	// TODO: add construction code here
-
 }
 
 CPhotoViewerMFCView::~CPhotoViewerMFCView()
@@ -139,90 +139,80 @@ CPhotoViewerMFCDoc* CPhotoViewerMFCView::GetDocument() const // non-debug versio
 void CPhotoViewerMFCView::OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/)
 {
 	// TODO: Add your specialized code here and/or call the base class
-	
 
 	///Added by me
 	//CListBox* pList = reinterpret_cast<CListBox*>(GetDlgItem(IDC_LIST1));
 
-	// get a pointer to the document class 
+	// get a pointer to the device context
+	
+
+	//call draw data
+	drawData();
+}
+
+//void CPhotoViewerMFCView::OnTimer(UINT_PTR nIDEvent)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//	if (nIDEvent == 1)
+//	{
+//		// tell windows the view needs redrawn 
+//		// note: the last parameter is the erase flag. 
+//		// if it is TRUE, things will flicker like crazy. 
+//		drawData();
+//	}
+//	CFormView::OnTimer(nIDEvent);
+//}
+
+
+void CPhotoViewerMFCView::OnSize(UINT nType, int cx, int cy)
+{
+	CFormView::OnSize(nType, cx, cy);
+
+	// TODO: Add your message handler code here
+	Invalidate(false);
+}
+
+void CPhotoViewerMFCView::OnSizing(UINT fwSide, LPRECT pRect)
+{
+	CFormView::OnSizing(fwSide, pRect);
+
+	// TODO: Add your message handler code here
+	Invalidate(false);
+}
+
+void CPhotoViewerMFCView::OnPaint()
+{
+	CPaintDC dc(this); // device context for painting
+					   // TODO: Add your message handler code here
+					   // Do not call CFormView::OnPaint() for painting messages
+
+	//TODO: draw only if image is in invalidated rect
+	CRect rcUpdate = dc.m_ps.rcPaint;
+	if (rcUpdate.TopLeft().x > 500 || rcUpdate.TopLeft().y > 500)
+		return;
+
+	char test[100];
+	sprintf_s(test, "%d %d", rcUpdate.TopLeft().x, rcUpdate.TopLeft().y);
+	//MessageBox("Test", test, MB_OK);
+	
+	//drawData();
+}
+
+bool CPhotoViewerMFCView::drawData()
+{
 	CDC* pDC = GetDC();
 	CPhotoViewerMFCDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 
-	// make pens for solid lines of thickness 2 
-	CPen RedPen(PS_SOLID, 2, RGB(255, 0, 0));
-	CPen BluePen(PS_SOLID, 2, RGB(0, 0, 255));
+	if (pDoc->m_pBmp == NULL)
+		return false;
+	Gdiplus::Graphics graphics(*pDC);
 
-	//Change pen to red
-	CPen* pOldPen = pDC->SelectObject(&RedPen);
+	//graphics.DrawImage(bmp,50, 50,bmp->GetWidth(),bmp->GetHeight());
+	graphics.DrawImage(pDoc->m_pBmp, 0, 0, 500, 500);
 
-	// get the total number of data points 
-	int N = pDoc->m_BugDataArray.GetSize();
-
-	// draw all of the connecting lines 
-	for (int i = 0; i < pDoc->m_nBugPosition - 1; i++)
-	{
-		pDC->MoveTo(pDoc->m_BugDataArray[i].x, pDoc->m_BugDataArray[i].y);
-		pDC->LineTo(pDoc->m_BugDataArray[i + 1].x, pDoc->m_BugDataArray[i + 1].y);
-	}
-
-	//Change pen
-	pDC->SelectObject(&BluePen);
-
-	// start drawing non animated tracks, but need to check for a 
-	// valid starting postion 
-	int start = pDoc->m_nBugPosition;
-	if (start < 0) 
-		start = 0;
-	for (int i = start; i < N - 2; i++)
-	{
-		pDC->MoveTo(pDoc->m_BugDataArray[i].x, pDoc->m_BugDataArray[i].y);
-		pDC->LineTo(pDoc->m_BugDataArray[i + 1].x, pDoc->m_BugDataArray[i + 1].y);
-	}
-
-	// deselect pens and delete them 
-	pDC->SelectObject(pOldPen);
-	RedPen.DeleteObject();
-	BluePen.DeleteObject();
-
-	// move to next position or quit animating 
-	if (pDoc->m_nBugPosition != -1) pDoc->m_nBugPosition++;
-	if (pDoc->m_nBugPosition >= N)
-	{
-		pDoc->m_nBugPosition = -1;
-
-		// stop timer 1 
-		KillTimer(1);
-
-		// redraw and erase so all lines are in initial state (blue) 
-		OnUpdate(NULL, NULL,NULL);
-	}
+	return true;
 }
 
 
-void CPhotoViewerMFCView::OnViewAnimation()
-{
-	// TODO: Add your command handler code here
-	// get the document 
-	CPhotoViewerMFCDoc* pDoc = GetDocument();
 
-	// set the position to the first data point 
-	pDoc->m_nBugPosition = 0;
-
-	// create a timer with id=1 and delay of 200 milliseconds 
-	SetTimer(1, 200, NULL);
-}
-
-
-void CPhotoViewerMFCView::OnTimer(UINT_PTR nIDEvent)
-{
-	// TODO: Add your message handler code here and/or call default
-	if (nIDEvent == 1)
-	{
-		// tell windows the view needs redrawn 
-		// note: the last parameter is the erase flag. 
-		// if it is TRUE, things will flicker like crazy. 
-		OnUpdate(NULL,NULL,NULL);
-	}
-	CFormView::OnTimer(nIDEvent);
-}

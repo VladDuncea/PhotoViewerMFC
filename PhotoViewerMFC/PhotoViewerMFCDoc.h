@@ -5,11 +5,7 @@
 
 #pragma once
 #include <afxtempl.h>
-struct SBugData
-{
-	float x;
-	float y;
-};
+
 
 class CPhotoViewerMFCDoc : public CDocument
 {
@@ -19,7 +15,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
-	CArray <SBugData, SBugData> m_BugDataArray;
+	
 // Operations
 public:
 
@@ -51,5 +47,6 @@ protected:
 	void SetSearchContent(const CString& value);
 #endif // SHARED_HANDLERS
 public:
-	int m_nBugPosition;
+	Gdiplus::Bitmap* m_pBmp;
+	CFile* m_pFile;
 };

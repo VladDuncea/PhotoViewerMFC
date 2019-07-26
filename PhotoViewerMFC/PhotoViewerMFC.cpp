@@ -12,10 +12,6 @@
 #include "PhotoViewerMFCDoc.h"
 #include "PhotoViewerMFCView.h"
 
-#include <objidl.h>
-#include <gdiplus.h>
-#pragma comment (lib,"Gdiplus.lib")
-
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -190,6 +186,8 @@ protected:
 // Implementation
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+//	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 };
 
 CAboutDlg::CAboutDlg() noexcept : CDialogEx(IDD_ABOUTBOX)
@@ -202,6 +200,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+//	ON_WM_SIZING()
 END_MESSAGE_MAP()
 
 // App command to run the dialog
@@ -234,3 +233,11 @@ void CPhotoViewerMFCApp::SaveCustomState()
 
 
 
+
+
+//void CAboutDlg::OnSizing(UINT fwSide, LPRECT pRect)
+//{
+//	CDialogEx::OnSizing(fwSide, pRect);
+//
+//	// TODO: Add your message handler code here
+//}

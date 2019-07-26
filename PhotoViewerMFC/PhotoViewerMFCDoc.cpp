@@ -31,12 +31,13 @@ END_MESSAGE_MAP()
 CPhotoViewerMFCDoc::CPhotoViewerMFCDoc() noexcept
 {
 	// TODO: add one-time construction code here
-	m_nBugPosition = -1;
-
+	m_pBmp = NULL;
+	m_pFile = NULL;
 }
 
 CPhotoViewerMFCDoc::~CPhotoViewerMFCDoc()
 {
+	delete(m_pBmp);
 }
 
 BOOL CPhotoViewerMFCDoc::OnNewDocument()
@@ -45,14 +46,12 @@ BOOL CPhotoViewerMFCDoc::OnNewDocument()
 		return FALSE;
 
 	// TODO: add reinitialization code here
-	m_BugDataArray.RemoveAll();
-	m_nBugPosition = -1;
-	// (SDI documents will reuse this document)
+	delete(m_pBmp);
+
+	//TODO: is Cfile self deleting ?
 
 	return TRUE;
 }
-
-
 
 
 // CPhotoViewerMFCDoc serialization
@@ -65,24 +64,17 @@ void CPhotoViewerMFCDoc::Serialize(CArchive& ar)
 	}
 	else
 	{
+		//Get the file info
+		m_pFile = ar.GetFile();
+		fprintf(stderr, m_pFile->GetFileName());
+
+		//Create a BMP
+		m_pBmp = new Gdiplus::Bitmap((CStringW)(m_pFile->GetFilePath()));
+
 		CMainFrame* pMain = (CMainFrame*)AfxGetMainWnd();
-		SBugData Data;
-		CString strOneLine;
-		// read data in, one line at a time 
-		while (ar.ReadString(strOneLine))
-		{
-			char strPass[250];
-			strcpy_s(strPass, CStringA(strOneLine).GetString());
-			// convert the text to floats 
-			sscanf_s(strPass, "%g %g\n", &Data.x, &Data.y);
-			
-			// add the data to the array 
-			m_BugDataArray.Add(Data);
-		}	
 		//Update status bar
 		CString strStatus;
-		strStatus.Format("Loaded %d points.", m_BugDataArray.GetSize());
-		pMain->ChangeStatusText(strStatus);
+		pMain->ChangeStatusText(m_pFile->GetFileName());
 	}
 }
 

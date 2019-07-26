@@ -52,8 +52,14 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 public:
-	afx_msg void OnViewAnimation();
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
+//	afx_msg void OnViewAnimation();
+//	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnPaint();
+private:
+	bool drawData();
+public:
+	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 };
 
 #ifndef _DEBUG  // debug version in PhotoViewerMFCView.cpp

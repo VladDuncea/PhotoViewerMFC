@@ -30,6 +30,9 @@
 #include <afxcontrolbars.h>     // MFC support for ribbons and control bars
 
 
+#include <objidl.h>
+#include <gdiplus.h>
+#pragma comment (lib,"Gdiplus.lib")
 
 
 

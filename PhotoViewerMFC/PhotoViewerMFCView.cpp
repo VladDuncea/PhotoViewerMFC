@@ -33,6 +33,7 @@ BEGIN_MESSAGE_MAP(CPhotoViewerMFCView, CFormView)
 	ON_WM_SIZE()
 	ON_WM_PAINT()
 	ON_WM_SIZING()
+	ON_COMMAND(ID_EDIT_ROTATE, &CPhotoViewerMFCView::OnEditRotate)
 END_MESSAGE_MAP()
 
 // CPhotoViewerMFCView construction/destruction
@@ -136,7 +137,7 @@ CPhotoViewerMFCDoc* CPhotoViewerMFCView::GetDocument() const // non-debug versio
 // CPhotoViewerMFCView message handlers
 
 
-void CPhotoViewerMFCView::OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/)
+void CPhotoViewerMFCView::OnUpdate(CView* pSender, LPARAM /*lHint*/, CObject* /*pHint*/)
 {
 	// TODO: Add your specialized code here and/or call the base class
 
@@ -144,10 +145,12 @@ void CPhotoViewerMFCView::OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject
 	//CListBox* pList = reinterpret_cast<CListBox*>(GetDlgItem(IDC_LIST1));
 
 	// get a pointer to the device context
-	
+
 
 	//call draw data
-	drawData();
+	///CRect rect;
+	///pSender->GetClientRect(rect);
+	drawData(nullptr);
 }
 
 //void CPhotoViewerMFCView::OnTimer(UINT_PTR nIDEvent)
@@ -170,6 +173,9 @@ void CPhotoViewerMFCView::OnSize(UINT nType, int cx, int cy)
 
 	// TODO: Add your message handler code here
 	Invalidate(false);
+	CScrollBar* scrollBar = GetScrollBarCtrl(SB_HORZ);
+	if (scrollBar)
+		scrollBar->SetScrollRange(0, 10000, TRUE);
 }
 
 void CPhotoViewerMFCView::OnSizing(UINT fwSide, LPRECT pRect)
@@ -188,31 +194,54 @@ void CPhotoViewerMFCView::OnPaint()
 
 	//TODO: draw only if image is in invalidated rect
 	CRect rcUpdate = dc.m_ps.rcPaint;
-	if (rcUpdate.TopLeft().x > 500 || rcUpdate.TopLeft().y > 500)
-		return;
-
-	char test[100];
-	sprintf_s(test, "%d %d", rcUpdate.TopLeft().x, rcUpdate.TopLeft().y);
-	//MessageBox("Test", test, MB_OK);
-	
-	//drawData();
+	CRect rect;
+	GetClientRect(rect);
+	if (rcUpdate.TopLeft().x ==0&& rcUpdate.TopLeft().y==0&& rcUpdate.BottomRight().x==rect.BottomRight().x && rcUpdate.BottomRight().y == rect.BottomRight().y)
+		drawData(NULL);
+	else
+		drawData(&rcUpdate);
 }
 
-bool CPhotoViewerMFCView::drawData()
+bool CPhotoViewerMFCView::drawData(const CRect *invalidRect)
 {
 	CDC* pDC = GetDC();
 	CPhotoViewerMFCDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 
+	//Check if a image is loaded
 	if (pDoc->m_pBmp == NULL)
 		return false;
+
 	Gdiplus::Graphics graphics(*pDC);
+	//Transfer CRect to Rect
+	
 
-	//graphics.DrawImage(bmp,50, 50,bmp->GetWidth(),bmp->GetHeight());
-	graphics.DrawImage(pDoc->m_pBmp, 0, 0, 500, 500);
-
+	if (invalidRect)
+	{
+		//invalidRect->top;
+		CString debug;
+		debug.Format("%lld %lld\n", invalidRect->TopLeft().x, invalidRect->TopLeft().y);
+		OutputDebugString(debug);
+		Gdiplus::Rect rect(invalidRect->TopLeft().x, invalidRect->TopLeft().y, pDoc->m_pBmp->GetWidth(), pDoc->m_pBmp->GetHeight());
+		//Gdiplus::Bitmap* partial = pDoc->m_pBmp->Clone(rect, pDoc->m_pBmp->GetPixelFormat());
+		//graphics.DrawImage(partial, invalidRect->TopLeft().x, invalidRect->TopLeft().y, partial->GetWidth(), partial->GetHeight());
+	}
+	else
+	{
+		graphics.DrawImage(pDoc->m_pBmp, 0, 0, pDoc->m_pBmp->GetWidth(), pDoc->m_pBmp->GetHeight());
+	}
+	
 	return true;
 }
 
 
 
+
+
+void CPhotoViewerMFCView::OnEditRotate()
+{
+	CPhotoViewerMFCDoc* pDoc = GetDocument();
+
+	pDoc->rotateImage();
+	drawData(nullptr);
+}

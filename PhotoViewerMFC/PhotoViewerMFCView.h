@@ -57,9 +57,10 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnPaint();
 private:
-	bool drawData();
+	bool drawData(const CRect* invalidRect = nullptr);
 public:
 	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
+	afx_msg void OnEditRotate();
 };
 
 #ifndef _DEBUG  // debug version in PhotoViewerMFCView.cpp

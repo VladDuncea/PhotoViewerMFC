@@ -17,17 +17,20 @@
 #define IDR_MAINFRAME_256               129
 #define IDR_PhotoViewerMFCTYPE          130
 #define IDS_EDIT_MENU                   306
+#define IDI_ICON1                       312
+#define IDR_ICONPED                     312
 #define ID_VIEW_ANIMATION               32771
 #define IDM_VIEW_ANIMATION              32772
 #define ID_EDIT_ANIMATE                 32775
 #define IDM_VIEW_ANIMATE                32776
+#define ID_EDIT_ROTATE                  32777
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        311
-#define _APS_NEXT_COMMAND_VALUE         32777
+#define _APS_NEXT_RESOURCE_VALUE        314
+#define _APS_NEXT_COMMAND_VALUE         32782
 #define _APS_NEXT_CONTROL_VALUE         1003
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

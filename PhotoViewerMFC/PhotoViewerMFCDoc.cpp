@@ -40,6 +40,12 @@ CPhotoViewerMFCDoc::~CPhotoViewerMFCDoc()
 	delete(m_pBmp);
 }
 
+bool CPhotoViewerMFCDoc::rotateImage(void)
+{
+
+	return m_pBmp->RotateFlip(Gdiplus::RotateFlipType::Rotate90FlipNone);
+}
+
 BOOL CPhotoViewerMFCDoc::OnNewDocument()
 {
 	if (!CDocument::OnNewDocument())

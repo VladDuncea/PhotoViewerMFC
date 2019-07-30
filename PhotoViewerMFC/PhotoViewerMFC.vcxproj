@@ -216,6 +216,9 @@
     <ResourceCompile Include="PhotoViewerMFC.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\..\..\Desktop\iconTest.png" />
+    <Image Include="res\icon1.ico" />
+    <Image Include="res\icon2.ico" />
     <Image Include="res\PhotoViewerMFC.ico" />
     <Image Include="res\PhotoViewerMFCDoc.ico" />
     <Image Include="res\Toolbar.bmp" />

@@ -18,6 +18,7 @@ public:
 	
 // Operations
 public:
+	bool rotateImage(void);
 
 // Overrides
 public:

@@ -188,6 +188,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 //	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
+//	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
 CAboutDlg::CAboutDlg() noexcept : CDialogEx(IDD_ABOUTBOX)
@@ -201,6 +202,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 //	ON_WM_SIZING()
+//ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 // App command to run the dialog
@@ -228,16 +230,3 @@ void CPhotoViewerMFCApp::LoadCustomState()
 void CPhotoViewerMFCApp::SaveCustomState()
 {
 }
-
-// CPhotoViewerMFCApp message handlers
-
-
-
-
-
-//void CAboutDlg::OnSizing(UINT fwSide, LPRECT pRect)
-//{
-//	CDialogEx::OnSizing(fwSide, pRect);
-//
-//	// TODO: Add your message handler code here
-//}

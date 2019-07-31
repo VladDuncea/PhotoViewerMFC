@@ -24,6 +24,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_WM_CREATE()
 	ON_COMMAND(ID_VIEW_CUSTOMIZE, &CMainFrame::OnViewCustomize)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
+	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -91,11 +92,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
 
 	// TODO: Delete these five lines if you don't want the toolbar and menubar to be dockable
-	m_wndMenuBar.EnableDocking(CBRS_ALIGN_ANY);
+	/*m_wndMenuBar.EnableDocking(CBRS_ALIGN_ANY);
 	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndMenuBar);
-	DockPane(&m_wndToolBar);
+	DockPane(&m_wndToolBar);*/
 
 
 	// enable Visual Studio 2005 style docking window behavior
@@ -229,3 +230,13 @@ void CMainFrame::ChangeStatusText(LPCTSTR text)
 	m_wndStatusBar.SetWindowText(text);
 }
 
+
+
+void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	lpMMI->ptMinTrackSize.x = 500;
+	lpMMI->ptMinTrackSize.y = 500;
+	CFrameWndEx::OnGetMinMaxInfo(lpMMI);
+}

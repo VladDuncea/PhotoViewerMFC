@@ -61,6 +61,7 @@ private:
 public:
 	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 	afx_msg void OnEditRotate();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
 #ifndef _DEBUG  // debug version in PhotoViewerMFCView.cpp

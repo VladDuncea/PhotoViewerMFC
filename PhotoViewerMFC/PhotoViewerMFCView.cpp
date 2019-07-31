@@ -34,6 +34,7 @@ BEGIN_MESSAGE_MAP(CPhotoViewerMFCView, CFormView)
 	ON_WM_PAINT()
 	ON_WM_SIZING()
 	ON_COMMAND(ID_EDIT_ROTATE, &CPhotoViewerMFCView::OnEditRotate)
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 // CPhotoViewerMFCView construction/destruction
@@ -153,29 +154,19 @@ void CPhotoViewerMFCView::OnUpdate(CView* pSender, LPARAM /*lHint*/, CObject* /*
 	drawData(nullptr);
 }
 
-//void CPhotoViewerMFCView::OnTimer(UINT_PTR nIDEvent)
-//{
-//	// TODO: Add your message handler code here and/or call default
-//	if (nIDEvent == 1)
-//	{
-//		// tell windows the view needs redrawn 
-//		// note: the last parameter is the erase flag. 
-//		// if it is TRUE, things will flicker like crazy. 
-//		drawData();
-//	}
-//	CFormView::OnTimer(nIDEvent);
-//}
-
-
 void CPhotoViewerMFCView::OnSize(UINT nType, int cx, int cy)
 {
 	CFormView::OnSize(nType, cx, cy);
 
 	// TODO: Add your message handler code here
-	Invalidate(false);
-	CScrollBar* scrollBar = GetScrollBarCtrl(SB_HORZ);
-	if (scrollBar)
-		scrollBar->SetScrollRange(0, 10000, TRUE);
+	/*SetScrollRange(SB_VERT, 0, 1000);
+	CFormView* cformview = reinterpret_cast<CFormView*>(GetDlgItem(IDD_PHOTOVIEWERMFC_FORM));
+	int mapMode;
+	SIZE s1, s2, s3;
+	cformview->GetDeviceScrollSizes(mapMode, s1, s2, s3);
+	CString ddebug;
+	ddebug.Format("%ld %ld | %ld %ld | %ld %ld \n", s1.cx, s1.cy, s2.cx, s2.cy, s3.cx, s3.cy);*/
+	OutputDebugString("Test\n");
 }
 
 void CPhotoViewerMFCView::OnSizing(UINT fwSide, LPRECT pRect)
@@ -183,7 +174,7 @@ void CPhotoViewerMFCView::OnSizing(UINT fwSide, LPRECT pRect)
 	CFormView::OnSizing(fwSide, pRect);
 
 	// TODO: Add your message handler code here
-	Invalidate(false);
+	
 }
 
 void CPhotoViewerMFCView::OnPaint()
@@ -192,14 +183,27 @@ void CPhotoViewerMFCView::OnPaint()
 					   // TODO: Add your message handler code here
 					   // Do not call CFormView::OnPaint() for painting messages
 
-	//TODO: draw only if image is in invalidated rect
+	//TODO: draw only if image is fully invalidated
 	CRect rcUpdate = dc.m_ps.rcPaint;
 	CRect rect;
 	GetClientRect(rect);
-	if (rcUpdate.TopLeft().x ==0&& rcUpdate.TopLeft().y==0&& rcUpdate.BottomRight().x==rect.BottomRight().x && rcUpdate.BottomRight().y == rect.BottomRight().y)
+
+	
+
+	//Draw only on a full invalidation
+	if (rcUpdate.TopLeft().x == 0 && rcUpdate.TopLeft().y == 0 && rcUpdate.BottomRight().x == rect.BottomRight().x && rcUpdate.BottomRight().y == rect.BottomRight().y)
+	{
 		drawData(NULL);
+	}
 	else
+	{
 		drawData(&rcUpdate);
+
+	}
+		
+	
+	
+
 }
 
 bool CPhotoViewerMFCView::drawData(const CRect *invalidRect)
@@ -213,18 +217,56 @@ bool CPhotoViewerMFCView::drawData(const CRect *invalidRect)
 		return false;
 
 	Gdiplus::Graphics graphics(*pDC);
-	//Transfer CRect to Rect
 	
 
 	if (invalidRect)
 	{
-		//invalidRect->top;
+		//Get client rect
+		CRect clientRect;
+		GetClientRect(clientRect);
+
+		//Background deletion is off so handle that here
+		Gdiplus::SolidBrush background(Gdiplus::Color(255, 255, 255, 255));
+		Gdiplus::Rect rects[2];
+		if (pDoc->m_pBmp->GetWidth() > clientRect.Width())
+			rects[1].X = pDoc->m_pBmp->GetWidth();
+
+		graphics.FillRectangles(,);
+		/*
 		CString debug;
-		debug.Format("%lld %lld\n", invalidRect->TopLeft().x, invalidRect->TopLeft().y);
+		//debug.Format("%ld %ld\n", invalidRect->TopLeft().x, invalidRect->TopLeft().y);
+		//OutputDebugString(debug);
+
+		//Get x and y of invalidated rect
+		unsigned int x = invalidRect->TopLeft().x;
+		unsigned int y = invalidRect->TopLeft().y;
+
+		//Check if the invalidated rect is outside the image
+		if (x > pDoc->m_pBmp->GetWidth() || y > pDoc->m_pBmp->GetHeight())
+			return true;
+
+		//Get clinet rect
+		CRect clientRect;
+		GetClientRect(clientRect);
+		//If the picture is bigger than the view paint only the visible part
+		unsigned int width = pDoc->m_pBmp->GetWidth() > clientRect.Width() ? clientRect.Width(): pDoc->m_pBmp->GetWidth();
+		unsigned int height = pDoc->m_pBmp->GetHeight() > clientRect.Height()? clientRect.Height() : pDoc->m_pBmp->GetHeight();
+		debug.Format("%d %d %d %d\n", x, y,width-x,height-y);
 		OutputDebugString(debug);
-		Gdiplus::Rect rect(invalidRect->TopLeft().x, invalidRect->TopLeft().y, pDoc->m_pBmp->GetWidth(), pDoc->m_pBmp->GetHeight());
-		//Gdiplus::Bitmap* partial = pDoc->m_pBmp->Clone(rect, pDoc->m_pBmp->GetPixelFormat());
+
+		//Create a rect to use on copying the base image
+		Gdiplus::Rect rect(x, y, width-x,height -y);
+		//Clone the part that we need
+		Gdiplus::Bitmap* partial = pDoc->m_pBmp->Clone(rect, PixelFormatDontCare);
+		//Handle possible errors
+		if (partial == NULL)
+		{
+			OutputDebugString("Error on bmp clone\n");
+			return false;
+		}
+		//Draw the needed part
 		//graphics.DrawImage(partial, invalidRect->TopLeft().x, invalidRect->TopLeft().y, partial->GetWidth(), partial->GetHeight());
+		delete(partial);*/
 	}
 	else
 	{
@@ -244,4 +286,14 @@ void CPhotoViewerMFCView::OnEditRotate()
 
 	pDoc->rotateImage();
 	drawData(nullptr);
+}
+
+
+BOOL CPhotoViewerMFCView::OnEraseBkgnd(CDC* pDC)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	///Supress background deletion
+	return CFormView::OnEraseBkgnd(pDC);
+	return false;
 }

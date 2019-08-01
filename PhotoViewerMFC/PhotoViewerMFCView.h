@@ -68,7 +68,9 @@ public:
 	CBitmap* m_pbmpMemBitmap;
 
 	void CreateScreenBuffer(const CSize szPanel, CDC* pDesktopDC);
-	void UpdateScreenBuffer(void);
+	void UpdateScreenBuffer(CSize scrollOfset = { 0,0 });
+	void UpdateScrollSize(int cx,int cy);
+	virtual BOOL OnScrollBy(CSize sizeScroll, BOOL bDoScroll = TRUE);
 };
 
 #ifndef _DEBUG  // debug version in PhotoViewerMFCView.cpp

@@ -43,7 +43,12 @@ CPhotoViewerMFCDoc::~CPhotoViewerMFCDoc()
 }
 
 bool CPhotoViewerMFCDoc::rotateImage(void)
-{
+{	
+	if (m_pBmp == NULL)
+	{
+		OutputDebugString("Nu trebuia sa poata sa roteasca poza!");
+		return false;
+	}
 	m_pBmp->RotateFlip(Gdiplus::RotateFlipType::Rotate90FlipNone);
 	//TODO:error handlng
 	return true;

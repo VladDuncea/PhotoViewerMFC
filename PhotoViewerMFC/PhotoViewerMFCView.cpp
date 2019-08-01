@@ -155,8 +155,6 @@ CPhotoViewerMFCDoc* CPhotoViewerMFCView::GetDocument() const // non-debug versio
 
 void CPhotoViewerMFCView::OnUpdate(CView* pSender, LPARAM /*lHint*/, CObject* /*pHint*/)
 {
-	// TODO: Add your specialized code here and/or call the base class
-
 	///Added by me
 	//CListBox* pList = reinterpret_cast<CListBox*>(GetDlgItem(IDC_LIST1));
 
@@ -173,22 +171,20 @@ void CPhotoViewerMFCView::OnUpdate(CView* pSender, LPARAM /*lHint*/, CObject* /*
 
 	///Using memory DC
 	CreateScreenBuffer(clientRect.Size(), pDesktopDC);
-	//call draw data
-	//drawData(nullptr);
+
+	//Update Scroll Bars
+	UpdateScrollSize(clientRect.Size().cx, clientRect.Size().cy);
+
 }
 
 void CPhotoViewerMFCView::OnSize(UINT nType, int cx, int cy)
 {
 	CFormView::OnSize(nType, cx, cy);
 
-	// TODO: Add your message handler code here
-	/*SetScrollRange(SB_VERT, 0, 1000);
-	CFormView* cformview = reinterpret_cast<CFormView*>(GetDlgItem(IDD_PHOTOVIEWERMFC_FORM));
-	int mapMode;
-	SIZE s1, s2, s3;
-	cformview->GetDeviceScrollSizes(mapMode, s1, s2, s3);
-	CString ddebug;
-	ddebug.Format("%ld %ld | %ld %ld | %ld %ld \n", s1.cx, s1.cy, s2.cx, s2.cy, s3.cx, s3.cy);*/
+	//Update Scroll Size
+	UpdateScrollSize(cx, cy);
+
+	//Update Screen Buffer
 	CreateScreenBuffer({ cx,cy }, GetDC());
 }
 
@@ -208,17 +204,6 @@ void CPhotoViewerMFCView::OnPaint()
 
 	pDC->BitBlt(rcUpdate.left, rcUpdate.top, rcUpdate.Width(), rcUpdate.Height(),
 		m_pMemDC, rcUpdate.left, rcUpdate.top, SRCCOPY);
-
-	//Draw only on a full invalidation
-	/*if (rcUpdate.TopLeft().x == 0 && rcUpdate.TopLeft().y == 0 && rcUpdate.BottomRight().x == rect.BottomRight().x && rcUpdate.BottomRight().y == rect.BottomRight().y)
-	{
-		drawData(NULL);
-	}
-	else
-	{
-		drawData(&rcUpdate);
-
-	}*/
 }
 
 bool CPhotoViewerMFCView::drawData(const CRect *invalidRect)
@@ -283,24 +268,28 @@ bool CPhotoViewerMFCView::drawData(const CRect *invalidRect)
 	return true;
 }
 
-
 void CPhotoViewerMFCView::OnEditRotate()
 {
 	CPhotoViewerMFCDoc* pDoc = GetDocument();
-
+	if (pDoc->m_pBmp == NULL)
+	{
+		MessageBox("Invalid option!", "Error",MB_OK);
+		return;
+	}
+		
 	pDoc->rotateImage();
 	pDoc->createCachedBmp(GetDC());
 	UpdateScreenBuffer();
 	drawData(nullptr);
 }
 
-
 BOOL CPhotoViewerMFCView::OnEraseBkgnd(CDC* pDC)
 {
 	// TODO: Add your message handler code here and/or call default
 
 	///Supress background deletion
-	return CFormView::OnEraseBkgnd(pDC);
+
+	//return CFormView::OnEraseBkgnd(pDC);
 
 	//If the window gets bigger and the picture is smaller than the window
 	//Delete the background 
@@ -349,7 +338,7 @@ void CPhotoViewerMFCView::CreateScreenBuffer(const CSize szPanel, CDC* pDesktopD
 	UpdateScreenBuffer();
 }
 
-void CPhotoViewerMFCView::UpdateScreenBuffer(void)
+void CPhotoViewerMFCView::UpdateScreenBuffer(CSize scrollOffset)
 {
 	//Verify to have a valid MemDC
 	if (m_pMemDC == NULL)
@@ -362,12 +351,46 @@ void CPhotoViewerMFCView::UpdateScreenBuffer(void)
 	{
 		return;
 	}
-
 	
 	//Draw the cached Bitmap
-	m_gr->DrawCachedBitmap(pDoc->m_pCBmp, 0, 0);
+	m_gr->DrawCachedBitmap(pDoc->m_pCBmp, -GetScrollPosition().x, -GetScrollPosition().y);
+
+	//Invalidate the screen so it gets redrawn
 	CRect crect;
 	GetClientRect(crect);
 	InvalidateRect(crect);
 	OnPaint();
+}
+
+void CPhotoViewerMFCView::UpdateScrollSize(int cx, int cy)
+{
+	CPhotoViewerMFCDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	//If the document has an image
+	if (pDoc->m_pBmp)
+	{
+		//Update the scroll-bars
+		int width = pDoc->m_pBmp->GetWidth();
+		int height = pDoc->m_pBmp->GetHeight();
+
+		//Set scrollbars if needed
+		if (cx < width || cy < height)
+			SetScrollSizes(MM_TEXT, { width,height });
+		else
+			SetScrollSizes(MM_TEXT, { 0,0 });
+	}
+}
+
+BOOL CPhotoViewerMFCView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
+{
+	// TODO: Add your specialized code here and/or call the base class
+
+	if (bDoScroll)
+	{
+		OutputDebugString("Scrolling !\n");
+		UpdateScreenBuffer(sizeScroll);
+	}
+	
+
+	return CFormView::OnScrollBy(sizeScroll, bDoScroll);
 }

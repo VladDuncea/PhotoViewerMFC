@@ -59,9 +59,16 @@ public:
 private:
 	bool drawData(const CRect* invalidRect = nullptr);
 public:
-	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
+//	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 	afx_msg void OnEditRotate();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+public:
+	Gdiplus::Graphics* m_gr;
+	CDC* m_pMemDC;
+	CBitmap* m_pbmpMemBitmap;
+
+	void CreateScreenBuffer(const CSize szPanel, CDC* pDesktopDC);
+	void UpdateScreenBuffer(void);
 };
 
 #ifndef _DEBUG  // debug version in PhotoViewerMFCView.cpp

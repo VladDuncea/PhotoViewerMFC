@@ -32,7 +32,7 @@ BEGIN_MESSAGE_MAP(CPhotoViewerMFCView, CFormView)
 	ON_WM_RBUTTONUP()
 	ON_WM_SIZE()
 	ON_WM_PAINT()
-	ON_WM_SIZING()
+//	ON_WM_SIZING()
 	ON_COMMAND(ID_EDIT_ROTATE, &CPhotoViewerMFCView::OnEditRotate)
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
@@ -43,10 +43,25 @@ CPhotoViewerMFCView::CPhotoViewerMFCView() noexcept
 	: CFormView(IDD_PHOTOVIEWERMFC_FORM)
 {
 	// TODO: add construction code here
+	m_pMemDC = NULL;
+	m_gr = NULL;
+	m_pbmpMemBitmap = NULL;
 }
 
 CPhotoViewerMFCView::~CPhotoViewerMFCView()
 {
+	if (m_pMemDC)
+	{
+		delete m_pMemDC; m_pMemDC = NULL;
+	}
+	if (m_pbmpMemBitmap)
+	{
+		delete m_pbmpMemBitmap; m_pbmpMemBitmap = NULL;
+	}
+	if (m_gr)
+	{
+		delete m_gr; m_gr = NULL;
+	}
 }
 
 void CPhotoViewerMFCView::DoDataExchange(CDataExchange* pDX)
@@ -145,13 +160,21 @@ void CPhotoViewerMFCView::OnUpdate(CView* pSender, LPARAM /*lHint*/, CObject* /*
 	///Added by me
 	//CListBox* pList = reinterpret_cast<CListBox*>(GetDlgItem(IDC_LIST1));
 
-	// get a pointer to the device context
+	//Create a cached BMP
+	CPhotoViewerMFCDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (pDoc->m_pBmp == NULL)
+		return;
 
+	CDC* pDesktopDC = GetDC();
+	pDoc->createCachedBmp(pDesktopDC);
+	CRect clientRect;
+	GetClientRect(clientRect);
 
+	///Using memory DC
+	CreateScreenBuffer(clientRect.Size(), pDesktopDC);
 	//call draw data
-	///CRect rect;
-	///pSender->GetClientRect(rect);
-	drawData(nullptr);
+	//drawData(nullptr);
 }
 
 void CPhotoViewerMFCView::OnSize(UINT nType, int cx, int cy)
@@ -166,15 +189,7 @@ void CPhotoViewerMFCView::OnSize(UINT nType, int cx, int cy)
 	cformview->GetDeviceScrollSizes(mapMode, s1, s2, s3);
 	CString ddebug;
 	ddebug.Format("%ld %ld | %ld %ld | %ld %ld \n", s1.cx, s1.cy, s2.cx, s2.cy, s3.cx, s3.cy);*/
-	OutputDebugString("Test\n");
-}
-
-void CPhotoViewerMFCView::OnSizing(UINT fwSide, LPRECT pRect)
-{
-	CFormView::OnSizing(fwSide, pRect);
-
-	// TODO: Add your message handler code here
-	
+	CreateScreenBuffer({ cx,cy }, GetDC());
 }
 
 void CPhotoViewerMFCView::OnPaint()
@@ -185,13 +200,17 @@ void CPhotoViewerMFCView::OnPaint()
 
 	//TODO: draw only if image is fully invalidated
 	CRect rcUpdate = dc.m_ps.rcPaint;
-	CRect rect;
-	GetClientRect(rect);
 
-	
+	CDC* pDC = GetDC();
+
+	if (m_pMemDC == NULL)
+		return;
+
+	pDC->BitBlt(rcUpdate.left, rcUpdate.top, rcUpdate.Width(), rcUpdate.Height(),
+		m_pMemDC, rcUpdate.left, rcUpdate.top, SRCCOPY);
 
 	//Draw only on a full invalidation
-	if (rcUpdate.TopLeft().x == 0 && rcUpdate.TopLeft().y == 0 && rcUpdate.BottomRight().x == rect.BottomRight().x && rcUpdate.BottomRight().y == rect.BottomRight().y)
+	/*if (rcUpdate.TopLeft().x == 0 && rcUpdate.TopLeft().y == 0 && rcUpdate.BottomRight().x == rect.BottomRight().x && rcUpdate.BottomRight().y == rect.BottomRight().y)
 	{
 		drawData(NULL);
 	}
@@ -199,11 +218,7 @@ void CPhotoViewerMFCView::OnPaint()
 	{
 		drawData(&rcUpdate);
 
-	}
-		
-	
-	
-
+	}*/
 }
 
 bool CPhotoViewerMFCView::drawData(const CRect *invalidRect)
@@ -221,19 +236,10 @@ bool CPhotoViewerMFCView::drawData(const CRect *invalidRect)
 
 	if (invalidRect)
 	{
-		//Get client rect
-		CRect clientRect;
-		GetClientRect(clientRect);
+		//graphics.DrawCachedBitmap(pDoc->m_pCBmp, 0, 0);
 
-		//Background deletion is off so handle that here
-		Gdiplus::SolidBrush background(Gdiplus::Color(255, 255, 255, 255));
-		Gdiplus::Rect rects[2];
-		if (pDoc->m_pBmp->GetWidth() > clientRect.Width())
-			rects[1].X = pDoc->m_pBmp->GetWidth();
-
-		graphics.FillRectangles(,);
-		/*
-		CString debug;
+		//graphics.DrawImage(pDoc->m_pBmp, 0, 0, pDoc->m_pBmp->GetWidth(), pDoc->m_pBmp->GetHeight());
+		/*CString debug;
 		//debug.Format("%ld %ld\n", invalidRect->TopLeft().x, invalidRect->TopLeft().y);
 		//OutputDebugString(debug);
 
@@ -270,14 +276,12 @@ bool CPhotoViewerMFCView::drawData(const CRect *invalidRect)
 	}
 	else
 	{
-		graphics.DrawImage(pDoc->m_pBmp, 0, 0, pDoc->m_pBmp->GetWidth(), pDoc->m_pBmp->GetHeight());
+		//graphics.DrawImage(pDoc->m_pBmp, 0, 0, pDoc->m_pBmp->GetWidth(), pDoc->m_pBmp->GetHeight());
+		//graphics.DrawCachedBitmap(pDoc->m_pCBmp, 0, 0);
 	}
 	
 	return true;
 }
-
-
-
 
 
 void CPhotoViewerMFCView::OnEditRotate()
@@ -285,6 +289,8 @@ void CPhotoViewerMFCView::OnEditRotate()
 	CPhotoViewerMFCDoc* pDoc = GetDocument();
 
 	pDoc->rotateImage();
+	pDoc->createCachedBmp(GetDC());
+	UpdateScreenBuffer();
 	drawData(nullptr);
 }
 
@@ -295,5 +301,73 @@ BOOL CPhotoViewerMFCView::OnEraseBkgnd(CDC* pDC)
 
 	///Supress background deletion
 	return CFormView::OnEraseBkgnd(pDC);
+
+	//If the window gets bigger and the picture is smaller than the window
+	//Delete the background 
+	//Get client rect
+	CRect clientRect;
+	GetClientRect(clientRect);
+
+	//Background deletion is off so handle that here
+	Gdiplus::SolidBrush background(Gdiplus::Color(255, 255, 255, 255));
+	Gdiplus::Rect rects[2];
+	/*if (pDoc->m_pBmp->GetWidth() > clientRect.Width())
+		rects[1].X = pDoc->m_pBmp->GetWidth();
+
+	graphics.FillRectangles(, );*/
 	return false;
+}
+
+void CPhotoViewerMFCView::CreateScreenBuffer(const CSize szPanel, CDC* pDesktopDC)
+{
+	if (m_pMemDC)
+	{
+		delete m_gr;
+		m_gr = NULL;
+		delete m_pMemDC;
+		m_pMemDC = NULL;
+		delete m_pbmpMemBitmap;
+		m_pbmpMemBitmap = NULL;
+	}
+
+	m_pMemDC = new CDC;
+	m_pMemDC->CreateCompatibleDC(pDesktopDC);
+	// Create a new bitmap
+	m_pbmpMemBitmap = new CBitmap;
+	// Create the new bitmap
+	m_pbmpMemBitmap->CreateCompatibleBitmap(pDesktopDC, szPanel.cx, szPanel.cy);
+	m_pbmpMemBitmap->SetBitmapDimension(szPanel.cx, szPanel.cy);
+	// Select the new bitmap into the memory DC
+	m_pMemDC->SelectObject(m_pbmpMemBitmap);
+	// Then create a GDI+ Graphics object
+	m_gr = Gdiplus::Graphics::FromHDC(m_pMemDC->m_hDC);
+	if(m_gr==NULL)
+		return;
+	//Paint a white color
+	Gdiplus::SolidBrush background(Gdiplus::Color(255, 255, 255, 255));
+	m_gr->FillRectangle(&background, 0, 0, szPanel.cx, szPanel.cy);
+	UpdateScreenBuffer();
+}
+
+void CPhotoViewerMFCView::UpdateScreenBuffer(void)
+{
+	//Verify to have a valid MemDC
+	if (m_pMemDC == NULL)
+		return;
+	
+	CPhotoViewerMFCDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	//Check for a valid Cached Bitmap
+	if (pDoc->m_pCBmp == NULL)
+	{
+		return;
+	}
+
+	
+	//Draw the cached Bitmap
+	m_gr->DrawCachedBitmap(pDoc->m_pCBmp, 0, 0);
+	CRect crect;
+	GetClientRect(crect);
+	InvalidateRect(crect);
+	OnPaint();
 }

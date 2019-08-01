@@ -19,6 +19,7 @@ public:
 // Operations
 public:
 	bool rotateImage(void);
+	bool createCachedBmp(CDC* pDc);
 
 // Overrides
 public:
@@ -49,5 +50,7 @@ protected:
 #endif // SHARED_HANDLERS
 public:
 	Gdiplus::Bitmap* m_pBmp;
+	Gdiplus::CachedBitmap*  m_pCBmp;
 	CFile* m_pFile;
+//	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
 };

@@ -32,18 +32,35 @@ CPhotoViewerMFCDoc::CPhotoViewerMFCDoc() noexcept
 {
 	// TODO: add one-time construction code here
 	m_pBmp = NULL;
+	m_pCBmp = NULL;
 	m_pFile = NULL;
 }
 
 CPhotoViewerMFCDoc::~CPhotoViewerMFCDoc()
 {
 	delete(m_pBmp);
+	delete(m_pCBmp);
 }
 
 bool CPhotoViewerMFCDoc::rotateImage(void)
 {
+	m_pBmp->RotateFlip(Gdiplus::RotateFlipType::Rotate90FlipNone);
+	//TODO:error handlng
+	return true;
+}
 
-	return m_pBmp->RotateFlip(Gdiplus::RotateFlipType::Rotate90FlipNone);
+bool CPhotoViewerMFCDoc::createCachedBmp(CDC* pDc)
+{
+	//Create a cached BMP
+	Gdiplus::Graphics graphics(*pDc);
+	//Clear old cached BMP
+	if (m_pCBmp)
+		delete(m_pCBmp);
+	//Create the new cached BMP
+	m_pCBmp = new Gdiplus::CachedBitmap(m_pBmp, &graphics);
+
+	//TODO: error handling
+	return true;
 }
 
 BOOL CPhotoViewerMFCDoc::OnNewDocument()
@@ -52,7 +69,6 @@ BOOL CPhotoViewerMFCDoc::OnNewDocument()
 		return FALSE;
 
 	// TODO: add reinitialization code here
-	delete(m_pBmp);
 
 	//TODO: is Cfile self deleting ?
 
@@ -72,11 +88,15 @@ void CPhotoViewerMFCDoc::Serialize(CArchive& ar)
 	{
 		//Get the file info
 		m_pFile = ar.GetFile();
-		fprintf(stderr, m_pFile->GetFileName());
+		OutputDebugString( m_pFile->GetFileName());
 
-		//Create a BMP
+		//Delete old BMP
+		if (m_pBmp)
+			delete m_pBmp;
+		//Open the new BMP
 		m_pBmp = new Gdiplus::Bitmap((CStringW)(m_pFile->GetFilePath()));
-
+	
+		//Get main window 
 		CMainFrame* pMain = (CMainFrame*)AfxGetMainWnd();
 		//Update status bar
 		CString strStatus;
@@ -151,6 +171,3 @@ void CPhotoViewerMFCDoc::Dump(CDumpContext& dc) const
 	CDocument::Dump(dc);
 }
 #endif //_DEBUG
-
-
-// CPhotoViewerMFCDoc commands
